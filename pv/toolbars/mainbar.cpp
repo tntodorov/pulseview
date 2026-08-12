@@ -590,6 +590,10 @@ void MainBar::commit_sample_rate()
 		sr_dev->config_set(ConfigKey::SAMPLERATE,
 			Glib::Variant<guint64>::create(sample_rate));
 		update_sample_rate_selector();
+		// Changing the samplerate may have made the driver enable or
+		// disable channels (capture mode follows the rate); re-layout the
+		// traces so newly shown channels are spaced correctly.
+		session_.refresh_signals();
 	} catch (Error& error) {
 		qDebug() << tr("Failed to configure samplerate:") << error.what();
 		return;

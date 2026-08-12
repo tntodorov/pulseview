@@ -931,6 +931,11 @@ double Session::get_samplerate() const
 	return samplerate;
 }
 
+void Session::refresh_signals()
+{
+	Q_EMIT signals_changed();
+}
+
 Glib::DateTime Session::get_acquisition_start_time() const
 {
 	return acq_start_time_;
