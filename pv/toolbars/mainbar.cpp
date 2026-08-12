@@ -351,6 +351,12 @@ QAction* MainBar::action_connect() const
 	return action_connect_;
 }
 
+void MainBar::refresh_config_selectors()
+{
+	update_sample_rate_selector();
+	update_sample_count_selector();
+}
+
 void MainBar::update_sample_rate_selector()
 {
 	Glib::VariantContainerBase gvar_dict;
