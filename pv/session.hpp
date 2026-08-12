@@ -187,6 +187,7 @@ public:
 	void stop_capture();
 
 	double get_samplerate() const;
+	void update_samplerate();
 	void refresh_signals();
 	Glib::DateTime get_acquisition_start_time() const;
 

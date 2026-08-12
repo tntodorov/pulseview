@@ -931,6 +931,19 @@ double Session::get_samplerate() const
 	return samplerate;
 }
 
+void Session::update_samplerate()
+{
+	if (!device_)
+		return;
+
+	try {
+		cur_samplerate_ =
+			device_->read_config<uint64_t>(ConfigKey::SAMPLERATE);
+	} catch (Error& e) {
+		cur_samplerate_ = 0;
+	}
+}
+
 void Session::refresh_signals()
 {
 	Q_EMIT signals_changed();

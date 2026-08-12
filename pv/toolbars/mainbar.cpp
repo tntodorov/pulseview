@@ -552,6 +552,13 @@ void MainBar::update_device_config_widgets()
 	// Update the channels popup
 	Channels *const channels = new Channels(session_, this);
 	channels_button_.set_popup(channels);
+	connect(channels, &Channels::channels_changed, this, [this]() {
+		// A channel toggle may have caused the driver to clamp the
+		// samplerate (e.g. when the mode changed); keep the session and
+		// the samplerate selector in sync with the actual device value.
+		session_.update_samplerate();
+		update_sample_rate_selector_value();
+	});
 
 	// Refresh sample rate list when channels popup closes, since
 	// toggling channels may change the available sample rates
