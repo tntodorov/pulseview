@@ -827,12 +827,13 @@ void MainBar::on_sample_rate_changed()
 
 void MainBar::on_config_changed()
 {
-	// We want to also call update_sample_rate_selector() here in case
-	// the user changed the SR_CONF_EXTERNAL_CLOCK option. However,
-	// commit_sample_rate() does this already, so we don't call it here
-
-	commit_sample_count();
-	commit_sample_rate();
+	// A configuration option such as external clock or device mode may change
+	// the valid samplerate list and may make the previous selection invalid.
+	// Re-query the list and the driver's current value instead of writing the
+	// stale frontend value back to the newly selected configuration.
+	update_sample_rate_selector();
+	session_.update_samplerate();
+	update_sample_count_selector();
 }
 
 void MainBar::on_actionNewView_triggered(QAction* action)

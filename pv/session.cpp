@@ -224,9 +224,23 @@ void Session::save_setup(QSettings &settings) const
 	int decode_signal_count = 0;
 	int gen_signal_count = 0;
 
-	// Save the device samplerate and sample count limit so they can be
-	// restored together with the channel selection on the next start.
+	// Save the device mode before its dependent samplerate and sample count so
+	// they can be restored together with the channel selection next time.
 	if (device_) {
+		const shared_ptr<sigrok::Device> sr_dev = device_->device();
+		if (sr_dev->config_check(
+			ConfigKey::DEVICE_MODE, sigrok::Capability::GET)) {
+			try {
+				auto value = sr_dev->config_get(ConfigKey::DEVICE_MODE);
+				const Glib::ustring mode = Glib::VariantBase::cast_dynamic<
+					Glib::Variant<Glib::ustring>>(value).get();
+				settings.setValue("device_mode",
+					QString::fromStdString(mode.raw()));
+			} catch (const sigrok::Error &e) {
+				qWarning() << tr("Failed to save device mode: %1")
+					.arg(QString::fromUtf8(e.what()));
+			}
+		}
 		uint64_t samplerate =
 			device_->read_config<uint64_t>(ConfigKey::SAMPLERATE);
 		uint64_t sample_count =
@@ -478,10 +492,23 @@ void Session::restore_setup(QSettings &settings)
 		settings.endGroup();
 	}
 
-	// Restore the device samplerate and sample count limit saved by
-	// save_setup(), then refresh the toolbar selectors and re-layout the
-	// view (the samplerate also drives the driver's channel mode).
+	// Restore device mode first because it controls the valid samplerate list,
+	// then restore the samplerate and sample count saved by save_setup().
 	if (device_) {
+		if (settings.contains("device_mode") &&
+			device_->device()->config_check(
+				ConfigKey::DEVICE_MODE, sigrok::Capability::SET)) {
+			try {
+				const string mode =
+					settings.value("device_mode").toString().toStdString();
+				device_->device()->config_set(ConfigKey::DEVICE_MODE,
+					Glib::Variant<Glib::ustring>::create(
+						Glib::ustring(mode)));
+			} catch (const sigrok::Error &e) {
+				qWarning() << tr("Failed to restore device mode: %1")
+					.arg(QString::fromUtf8(e.what()));
+			}
+		}
 		if (settings.contains("samplerate")) {
 			const uint64_t value =
 				settings.value("samplerate").toULongLong();
