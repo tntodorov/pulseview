@@ -224,8 +224,8 @@ void Session::save_setup(QSettings &settings) const
 	int decode_signal_count = 0;
 	int gen_signal_count = 0;
 
-	// Save the device mode before its dependent samplerate and sample count so
-	// they can be restored together with the channel selection next time.
+	// Save device mode and input range before the dependent samplerate and
+	// sample count so all capture controls can be restored together next time.
 	if (device_) {
 		const shared_ptr<sigrok::Device> sr_dev = device_->device();
 		if (sr_dev->config_check(
@@ -238,6 +238,19 @@ void Session::save_setup(QSettings &settings) const
 					QString::fromStdString(mode.raw()));
 			} catch (const sigrok::Error &e) {
 				qWarning() << tr("Failed to save device mode: %1")
+					.arg(QString::fromUtf8(e.what()));
+			}
+		}
+		if (sr_dev->config_check(
+			ConfigKey::RANGE, sigrok::Capability::GET)) {
+			try {
+				auto value = sr_dev->config_get(ConfigKey::RANGE);
+				const Glib::ustring range = Glib::VariantBase::cast_dynamic<
+					Glib::Variant<Glib::ustring>>(value).get();
+				settings.setValue("input_range",
+					QString::fromStdString(range.raw()));
+			} catch (const sigrok::Error &e) {
+				qWarning() << tr("Failed to save input range: %1")
 					.arg(QString::fromUtf8(e.what()));
 			}
 		}
@@ -492,8 +505,8 @@ void Session::restore_setup(QSettings &settings)
 		settings.endGroup();
 	}
 
-	// Restore device mode first because it controls the valid samplerate list,
-	// then restore the samplerate and sample count saved by save_setup().
+	// Restore device mode and input range first, then restore the samplerate and
+	// sample count saved by save_setup().
 	if (device_) {
 		if (settings.contains("device_mode") &&
 			device_->device()->config_check(
@@ -506,6 +519,20 @@ void Session::restore_setup(QSettings &settings)
 						Glib::ustring(mode)));
 			} catch (const sigrok::Error &e) {
 				qWarning() << tr("Failed to restore device mode: %1")
+					.arg(QString::fromUtf8(e.what()));
+			}
+		}
+		if (settings.contains("input_range") &&
+			device_->device()->config_check(
+				ConfigKey::RANGE, sigrok::Capability::SET)) {
+			try {
+				const string range =
+					settings.value("input_range").toString().toStdString();
+				device_->device()->config_set(ConfigKey::RANGE,
+					Glib::Variant<Glib::ustring>::create(
+						Glib::ustring(range)));
+			} catch (const sigrok::Error &e) {
+				qWarning() << tr("Failed to restore input range: %1")
 					.arg(QString::fromUtf8(e.what()));
 			}
 		}

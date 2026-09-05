@@ -116,6 +116,7 @@ Device::Device(shared_ptr<sigrok::Configurable> configurable) :
 		case SR_CONF_DATA_SOURCE:
 		case SR_CONF_EXTERNAL_CLOCK_SOURCE:
 		case SR_CONF_DEVICE_MODE:
+		case SR_CONF_RANGE:
 			bind_enum(descr, "", key, capabilities, get, set);
 			break;
 
