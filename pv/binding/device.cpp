@@ -24,6 +24,7 @@
 #include "device.hpp"
 
 #include <pv/prop/bool.hpp>
+#include <pv/prop/double.hpp>
 #include <pv/prop/enum.hpp>
 #include <pv/prop/int.hpp>
 
@@ -44,6 +45,7 @@ using sigrok::ConfigKey;
 using sigrok::Error;
 
 using pv::prop::Bool;
+using pv::prop::Double;
 using pv::prop::Enum;
 using pv::prop::Int;
 using pv::prop::Property;
@@ -120,6 +122,11 @@ Device::Device(shared_ptr<sigrok::Configurable> configurable) :
 			bind_enum(descr, "", key, capabilities, get, set);
 			break;
 
+		case SR_CONF_TRIGGER_LEVEL:
+			bind_double(descr, "", 3, " V", pair<double, double>(
+				-1000000.0, 1000000.0), 0.001, get, set);
+			break;
+
 		case SR_CONF_FILTER:
 		case SR_CONF_EXTERNAL_CLOCK:
 		case SR_CONF_RLE:
@@ -167,6 +174,15 @@ void Device::bind_bool(const QString &name, const QString &desc,
 	assert(configurable_);
 	properties_.push_back(shared_ptr<Property>(new Bool(
 		name, desc, getter, setter)));
+}
+
+void Device::bind_double(const QString &name, const QString &desc, int decimals,
+	QString suffix, optional< pair<double, double> > range,
+	optional<double> step, Property::Getter getter, Property::Setter setter)
+{
+	assert(configurable_);
+	properties_.push_back(shared_ptr<Property>(new Double(name, desc, decimals,
+		suffix, range, step, getter, setter)));
 }
 
 void Device::bind_enum(const QString &name, const QString &desc,
